@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arabic Flashcards</title>
+    <style>
+        /* Import Amiri font from Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
+
+        body {
+            direction: rtl; /* For Arabic/Persian language support */
+            font-family: 'Amiri', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Prioritize Amiri, fallback to Segoe UI */
+            background-color: #1a1a1a; /* Dark background */
+            color: #f0f0f0; /* Light text color */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            font-size: 1.1em; /* Base font size increased */
+        }
+
+        .container {
+            background-color: #2b2b2b; /* Container background */
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 700px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #4CAF50; /* Green for title */
+            margin-bottom: 30px; /* Slightly more space */
+            font-size: 2.5em; /* Larger title */
+        }
+
+        .flashcard-area {
+            background-color: #3a3a3a;
+            padding: 30px; /* Increased padding */
+            border-radius: 8px;
+            margin-bottom: 25px;
+            min-height: 200px; /* Taller area */
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Center content vertically */
+            align-items: center; /* Center content horizontally */
+            cursor: pointer; /* Indicate it's clickable */
+            transition: background-color 0.3s ease; /* Smooth transition on hover/click */
+            /* Animation properties */
+            animation-duration: 0.5s;
+            animation-fill-mode: forwards;
+        }
+
+        .flashcard-area:hover {
+            background-color: #4a4a4a; /* Slightly lighter on hover */
+        }
+
+        /* Keyframe animations for fade */
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-out {
+            animation-name: fadeOut;
+        }
+
+        .fade-in {
+            animation-name: fadeIn;
+        }
+
+        .word-text {
+            font-size: 2.2em; /* Even larger for direct Arabic text */
+            font-weight: bold;
+            color: #FFD700; /* Gold color for the Arabic word */
+            text-rendering: optimizeLegibility;
+            margin-bottom: 15px; /* Space between word and meaning */
+        }
+
+        .meaning-text {
+            font-size: 1.6em; /* Slightly smaller than word, larger than normal text */
+            color: #f0f0f0; /* Light text color for meaning */
+            text-rendering: optimizeLegibility;
+            display: block; /* Always visible */
+        }
+
+        /* Removed button-group and button styles as they are no longer needed */
+
+        /* Custom message box for alerts (kept in case of no words, though unlikely) */
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #3a3a3a;
+            color: #f0f0f0;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            text-align: center;
+            font-family: 'Amiri', sans-serif;
+            font-size: 1.2em;
+            max-width: 80%;
+        }
+
+        .message-box button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #008CBA;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-family: 'Amiri', sans-serif;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>فلش کارت عربی</h1>
+
+        <div id="flashcard-screen">
+            <div class="flashcard-area" id="flashcard-area">
+                <div class="word-text" id="word-text"></div>
+                <div class="meaning-text" id="meaning-text"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data for flashcards, combining words from page 1 and page 9
+        const words = [
+            { word: 'قُلْ', meaning: 'بگو' },
+            { word: 'ذا', meaning: 'این' },
+            { word: 'أَنْجُمٌ', meaning: 'ستارگان' },
+            { word: 'مُستعرة', meaning: 'فروزان' },
+            { word: 'ذات', meaning: 'دارای' },
+            { word: 'مُنهمرة', meaning: 'ريزان' },
+            { word: 'أَنْعُمُ', meaning: 'نعمت ها' },
+            { word: 'نَضِرَة', meaning: 'تر و تازه' },
+            { word: 'زانَ', meaning: 'زینت داد' },
+            { word: 'أَوْجَدَ', meaning: 'پدید آورد' },
+            { word: 'نُمَتْ', meaning: 'رشد کرد' },
+            { word: 'شَرَرَة', meaning: 'پاره آتش' },
+            { word: 'بالِغٌ', meaning: 'کامل' },
+            { word: 'ضِيَاء', meaning: 'روشنایی' },
+            { word: 'جَذْوَة', meaning: 'پاره آتش' },
+            { word: 'غُصُونٌ', meaning: 'شاخه ها' },
+            { word: 'يُخرِجُ', meaning: 'در می آورد' },
+            { word: 'غَيْمٌ', meaning: 'ابر' },
+            { word: 'مَن ذا', meaning: 'این کیست' },
+            { word: 'أَجْرَىٰ', meaning: 'جاری کرد' },
+            { word: 'أَخْلَصَ', meaning: 'مخلص شد' },
+            { word: 'كُلُوا', meaning: 'بخورید' },
+            { word: 'مِئَة', meaning: 'صد' },
+            { word: 'يَجْرِي', meaning: 'جاری است' },
+            { word: 'يَكْفِي', meaning: 'بس است' },
+            { word: 'أَمْسَكَ', meaning: 'به دست گرفت و نگه داشت' },
+            { word: 'بَنَى', meaning: 'ساخت' },
+            { word: 'عَلَّمَ', meaning: 'یاد داد' },
+            { word: 'غَرَسَ', meaning: 'کاشت' },
+            { word: 'يَنابِيعُ', meaning: 'جوی های پرآب، چشمه ها' },
+            { word: 'لا تَفَرَّقُوا', meaning: 'پراکنده نشوید' },
+            { word: 'ذو', meaning: 'دارای' } // Added the new word here
+        ];
+
+        let allWords = [];
+        let currentWordIndex = 0;
+        let audioContextStarted = false; // Flag to track audio context state
+
+        const flashcardArea = document.getElementById('flashcard-area');
+        const wordText = document.getElementById('word-text');
+        const meaningText = document.getElementById('meaning-text');
+
+        // Initialize Tone.js synth for sound effects
+        const synth = new Tone.Synth().toDestination();
+
+        // Function to shuffle an array (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Function to start the flashcard session
+        function startFlashcards() {
+            allWords = [...words]; // Create a shallow copy of the original words array
+            if (allWords.length === 0) {
+                // This case should ideally not happen with static data, but good for robustness
+                // Using console.error instead of displayMessageBox for non-critical errors
+                console.error('هیچ واژه ای برای نمایش وجود ندارد. (No words available to display.)');
+                return;
+            }
+            shuffleArray(allWords); // Shuffle the words for random order
+            currentWordIndex = 0;
+            displayCurrentCard();
+        }
+
+        // Function to display the current flashcard with animation
+        function displayCurrentCard() {
+            // Apply fade-out animation
+            flashcardArea.classList.remove('fade-in');
+            flashcardArea.classList.add('fade-out');
+
+            // After animation completes, update content and fade in
+            setTimeout(() => {
+                if (currentWordIndex >= allWords.length) {
+                    // If all cards in the current shuffled deck have been shown, reshuffle
+                    shuffleArray(allWords);
+                    currentWordIndex = 0;
+                }
+
+                const currentCard = allWords[currentWordIndex];
+                wordText.textContent = currentCard.word;
+                meaningText.textContent = currentCard.meaning;
+
+                // Play a subtle sound effect only if audio context is started
+                if (audioContextStarted) {
+                    // Schedule the note to play slightly after the content updates
+                    // to avoid "Start time must be strictly greater" errors with rapid clicks
+                    synth.triggerAttackRelease("C4", "8n", Tone.now() + 0.05);
+                }
+
+                // Apply fade-in animation
+                flashcardArea.classList.remove('fade-out');
+                flashcardArea.classList.add('fade-in');
+            }, 450); // Slightly less than animation-duration to ensure smooth transition
+        }
+
+        // Function to advance to the next card (triggered by clicking the card)
+        function advanceCard() {
+            // Start audio context on the first user interaction
+            if (!audioContextStarted) {
+                Tone.start().then(() => {
+                    console.log("AudioContext started!");
+                    audioContextStarted = true;
+                    // Proceed with displaying the card after context is started
+                    currentWordIndex++;
+                    displayCurrentCard();
+                }).catch(e => {
+                    console.error("Failed to start AudioContext:", e);
+                    // If audio context fails to start, still advance the card without sound
+                    currentWordIndex++;
+                    displayCurrentCard();
+                });
+            } else {
+                currentWordIndex++;
+                displayCurrentCard();
+            }
+        }
+
+        // Event Listeners
+        flashcardArea.addEventListener('click', advanceCard); // Click anywhere on the card to advance
+
+        // Start the flashcard application when the page loads
+        window.onload = startFlashcards;
+    </script>
+</body>
+</html>
